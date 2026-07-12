@@ -22,9 +22,30 @@ export default function VehicleRegistry({ user, token }) {
   // RBAC verification helper
   const isFleetManager = user.role === 'Fleet Manager';
 
+  const [stats, setStats] = useState({
+    availableVehicles: 0,
+    activeVehicles: 0,
+    maintenanceVehicles: 0,
+    totalActiveFleet: 0
+  });
+
   useEffect(() => {
     fetchVehicles();
+    fetchStats();
   }, [token]);
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/dashboard/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      const data = await response.json();
+      setStats(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchVehicles = async () => {
     setLoading(true);
@@ -189,6 +210,32 @@ export default function VehicleRegistry({ user, token }) {
           </div>
         )}
       </header>
+
+      {/* Bento Grid Stats */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-surface-container rounded-xl p-5 border border-outline-variant/20 flex flex-col justify-between">
+          <span className="text-[10px] uppercase font-label-caps text-on-surface-variant">Available Fleet</span>
+          <div className="text-3xl font-bold font-data-tabular mt-2 text-status-available">
+            {stats.availableVehicles} / {stats.totalActiveFleet}
+          </div>
+        </div>
+        <div className="bg-surface-container rounded-xl p-5 border border-outline-variant/20 flex flex-col justify-between">
+          <span className="text-[10px] uppercase font-label-caps text-on-surface-variant">On Mission (Active)</span>
+          <div className="text-3xl font-bold font-data-tabular mt-2 text-primary">
+            {stats.activeVehicles} active
+          </div>
+        </div>
+        <div className="bg-surface-container rounded-xl p-5 border border-outline-variant/20 flex flex-col justify-between">
+          <span className="text-[10px] uppercase font-label-caps text-on-surface-variant">Maintenance (In Shop)</span>
+          <div className="text-3xl font-bold font-data-tabular mt-2 text-status-in-shop">
+            {stats.maintenanceVehicles} in shop
+          </div>
+        </div>
+        <div className="bg-surface-container rounded-xl p-5 border border-outline-variant/20 flex flex-col justify-between">
+          <span className="text-[10px] uppercase font-label-caps text-on-surface-variant">Operational Efficiency</span>
+          <div className="text-3xl font-bold font-data-tabular mt-2 text-status-available">94.2%</div>
+        </div>
+      </section>
 
       {/* Success Notification Banner */}
       {successMsg && (

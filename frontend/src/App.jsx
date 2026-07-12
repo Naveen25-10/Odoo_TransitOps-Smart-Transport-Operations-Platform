@@ -2,44 +2,33 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import VehicleRegistry from './components/VehicleRegistry';
+import Drivers from './components/Drivers';
+import Trips from './components/Trips';
+import Maintenance from './components/Maintenance';
+import Finance from './components/Finance';
 
 export default function App() {
-  const [token, setToken] = useState(localStorage.getItem('transitops_token') || null);
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('transitops_user')) || null);
+  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
   const [currentTab, setCurrentTab] = useState('dashboard');
 
-  // Verify active session on load
-  useEffect(() => {
-    if (token) {
-      fetch('http://localhost:5000/api/auth/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Expired session');
-        return res.json();
-      })
-      .then(data => {
-        setUser(data.user);
-        localStorage.setItem('transitops_user', JSON.stringify(data.user));
-      })
-      .catch(() => {
-        handleLogout();
-      });
+  const getAvatarPath = (role) => {
+    switch (role) {
+      case 'Fleet Manager': return '/avatars/manager.png';
+      case 'Safety Officer': return '/avatars/safety.png';
+      case 'Financial Analyst': return '/avatars/analyst.png';
+      default: return '/avatars/driver.png';
     }
-  }, [token]);
+  };
 
   const handleLoginSuccess = (newToken, newUser) => {
     setToken(newToken);
     setUser(newUser);
-    localStorage.setItem('transitops_token', newToken);
-    localStorage.setItem('transitops_user', JSON.stringify(newUser));
   };
 
   const handleLogout = () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem('transitops_token');
-    localStorage.removeItem('transitops_user');
   };
 
   if (!token || !user) {
@@ -49,7 +38,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col">
       {/* Global Navigation Bar */}
-      <nav className="sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 px-4 md:px-8 py-3.5 flex items-center justify-between">
+      <nav className="sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 px-4 md:px-6 py-3 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-primary-container rounded flex items-center justify-center shadow-lg shadow-primary-container/20">
@@ -57,17 +46,17 @@ export default function App() {
               terminal
             </span>
           </div>
-          <div>
+          <div className="hidden sm:block">
             <h1 className="font-bold text-base tracking-tight text-primary">TransitOps</h1>
             <p className="text-[9px] font-label-caps text-on-surface-variant tracking-wider uppercase leading-none">Ops Grid</p>
           </div>
         </div>
 
         {/* Tab Selection */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 overflow-x-auto max-w-[65%] sm:max-w-none no-scrollbar">
           <button
             onClick={() => setCurrentTab('dashboard')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all shrink-0 ${
               currentTab === 'dashboard'
                 ? 'bg-primary-container text-on-primary-container shadow-md shadow-primary-container/10'
                 : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40'
@@ -76,45 +65,101 @@ export default function App() {
             <span className="material-symbols-outlined text-base">dashboard</span>
             Dashboard
           </button>
+          
           <button
             onClick={() => setCurrentTab('registry')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all shrink-0 ${
               currentTab === 'registry'
                 ? 'bg-primary-container text-on-primary-container shadow-md shadow-primary-container/10'
                 : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40'
             }`}
           >
             <span className="material-symbols-outlined text-base">local_shipping</span>
-            Vehicle Registry
+            Vehicles
           </button>
+
+          <button
+            onClick={() => setCurrentTab('drivers')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all shrink-0 ${
+              currentTab === 'drivers'
+                ? 'bg-primary-container text-on-primary-container shadow-md shadow-primary-container/10'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">badge</span>
+            Drivers
+          </button>
+
+          <button
+            onClick={() => setCurrentTab('trips')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all shrink-0 ${
+              currentTab === 'trips'
+                ? 'bg-primary-container text-on-primary-container shadow-md shadow-primary-container/10'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">map</span>
+            Dispatch
+          </button>
+
+          <button
+            onClick={() => setCurrentTab('maintenance')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all shrink-0 ${
+              currentTab === 'maintenance'
+                ? 'bg-primary-container text-on-primary-container shadow-md shadow-primary-container/10'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">build</span>
+            Service
+          </button>
+
+          <button
+            onClick={() => setCurrentTab('finance')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all shrink-0 ${
+              currentTab === 'finance'
+                ? 'bg-primary-container text-on-primary-container shadow-md shadow-primary-container/10'
+                : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">account_balance_wallet</span>
+            Ledger
+          </button>
+
         </div>
 
         {/* User Card & Logout */}
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex flex-col items-end">
+        <div className="flex items-center gap-3 bg-surface-container-high/40 border border-outline-variant/20 pl-2.5 pr-3 py-1.5 rounded-xl">
+          <img 
+            src={getAvatarPath(user.role)} 
+            alt={user.name} 
+            className="w-7 h-7 rounded-full object-cover border border-outline-variant/50 shadow-sm bg-surface-container-highest"
+          />
+          <div className="hidden md:flex flex-col items-start leading-none">
             <span className="text-xs font-semibold text-on-surface">{user.name}</span>
-            <span className="text-[10px] font-mono text-on-surface-variant">{user.role}</span>
+            <span className="text-[9px] font-mono text-on-surface-variant/80 mt-0.5">{user.role}</span>
           </div>
 
-          <div className="h-8 w-px bg-outline-variant/35 hidden md:block"></div>
+          <div className="h-6 w-px bg-outline-variant/30 hidden md:block"></div>
 
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center p-2 rounded-lg border border-outline-variant/30 hover:border-error/50 hover:bg-error-container/20 text-on-surface-variant hover:text-error transition-all"
+            className="flex items-center justify-center p-1.5 rounded-lg border border-outline-variant/30 hover:border-error/50 hover:bg-error-container/20 text-on-surface-variant hover:text-error transition-all"
             title="Log Out Operator"
           >
-            <span className="material-symbols-outlined text-lg">logout</span>
+            <span className="material-symbols-outlined text-base">logout</span>
           </button>
         </div>
       </nav>
 
       {/* Main View Container */}
       <main className="flex-1 py-4">
-        {currentTab === 'dashboard' ? (
-          <Dashboard user={user} token={token} />
-        ) : (
-          <VehicleRegistry user={user} token={token} />
-        )}
+        {currentTab === 'dashboard' && <Dashboard user={user} token={token} />}
+        {currentTab === 'registry' && <VehicleRegistry user={user} token={token} />}
+        {currentTab === 'drivers' && <Drivers user={user} token={token} />}
+        {currentTab === 'trips' && <Trips user={user} token={token} />}
+        {currentTab === 'maintenance' && <Maintenance user={user} token={token} />}
+        {currentTab === 'finance' && <Finance user={user} token={token} />}
       </main>
 
       {/* Global Status Footer */}
